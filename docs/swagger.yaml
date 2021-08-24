@@ -1,0 +1,758 @@
+swagger: '2.0'
+info:
+  title: sibdev-practice-2021
+  description: >-
+    Api for an application that provides the ability to track expenses and income.
+  license:
+    name: MIT License
+  version: v1
+host: 0.0.0.0:8000
+schemes:
+  - http
+basePath: /api/v1
+consumes:
+  - application/json
+produces:
+  - application/json
+securityDefinitions:
+  api_key:
+    type: apiKey
+    in: header
+    name: Authorization
+security:
+  - api_key: []
+paths:
+  /categories/:
+    get:
+      summary: 'Returns a list of user categories.'
+      operationId: categories_list
+      description: 'Returns a list of user categories'
+      parameters: []
+      responses:
+        '200':
+          description: 'A list of user categories was returned. If the user has no categories, an empty list is returned.'
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/CategoryList'
+        '401':
+          description: "The user is not authorized."
+      tags:
+        - categories
+    post:
+      summary: 'Create new category.'
+      operationId: categories_create
+      description: 'Create new category'
+      parameters:
+        - name: data
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/CategoryCreate'
+      responses:
+        '201':
+          description: 'The category has been successfully created.'
+          schema:
+            $ref: '#/definitions/CategoryCreate'
+        '401':
+          description: "The user is not authorized."
+        '400':
+          description: 'Invalid data sent.'
+      tags:
+        - categories
+    parameters: []
+  /categories/summary/:
+    get:
+      summary: 'Return a list of expenses by category.'
+      operationId: categories_summary
+      description: 'Return a list of expense categories with the calculated amount of transactions for each of them.'
+      parameters:
+        - name: start_date
+          in: query
+          description: 'Start date'
+          required: false
+          type: string
+        - name: end_date
+          in: query
+          description: 'End date'
+          required: false
+          type: string
+      responses:
+        '200':
+          description: 'The list of expenses was returned successfully.'
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/SummaryList'
+        '401':
+          description: "The user is not authorized."
+      tags:
+        - categories
+    parameters: []
+  /categories/{id}/:
+    delete:
+      summary: 'Delete category by id.'
+      operationId: categories_delete
+      description: 'Delete category by id.'
+      parameters: []
+      responses:
+        '204':
+          description: 'The category has been successfully deleted.'
+        '401':
+          description: "The user is not authorized."
+        '404':
+          description: "A non-existent id was passed."
+        '403':
+          description: "The user is not the owner of the resource."
+      tags:
+        - categories
+    parameters:
+      - name: id
+        in: path
+        required: true
+        type: string
+  /transactions/:
+    get:
+      summary: 'Return a list of user transactions.'
+      operationId: transactions_list
+      description: 'Return a list of user transactions.'
+      parameters:
+        - name: start_date
+          in: query
+          description: 'Return a list of user transactions committed on or after the specified date.'
+          required: false
+          type: string
+        - name: end_date
+          in: query
+          description: 'Return a list of the user transactions committed no later than the specified date.'
+          required: false
+          type: string
+        - name: page
+          in: query
+          description: 'A page number within the paginated result set.'
+          required: false
+          type: integer
+        - name: page_size
+          in: query
+          description: 'Number of results to return per page.'
+          required: false
+          type: integer
+      responses:
+        '200':
+          description: 'A list of user transactions was returned. If the user has no transactions, an empty list is returned.'
+          schema:
+            required:
+              - count
+              - results
+            type: object
+            properties:
+              count:
+                type: integer
+              next:
+                type: string
+                format: uri
+                x-nullable: true
+              previous:
+                type: string
+                format: uri
+                x-nullable: true
+              results:
+                type: array
+                items:
+                  $ref: '#/definitions/TransactionList'
+        '401':
+          description: "The user is not authorized."
+      tags:
+        - transactions
+    post:
+      summary: 'Create a new transaction.'
+      operationId: transactions_create
+      description: 'Create a new transaction.'
+      parameters:
+        - name: data
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/TransactionCreate'
+      responses:
+        '201':
+          description: 'The transaction was successfully created.'
+          schema:
+            $ref: '#/definitions/TransactionCreate'
+        '401':
+          description: "The user is not authorized."
+      tags:
+        - transactions
+    parameters: []
+  /transactions/globals/:
+    get:
+      summary: 'Return the summarized data on the user expenses and income for the selected period in the calendar.'
+      operationId: transactions_globals
+      description: 'Return the summarized data on the user expenses and income for the selected period in the calendar.'
+      parameters:
+        - name: start_date
+          in: query
+          description: 'Start date'
+          required: false
+          type: string
+        - name: end_date
+          in: query
+          description: 'End date'
+          required: false
+          type: string
+        - name: page
+          in: query
+          description: A page number within the paginated result set.
+          required: false
+          type: integer
+        - name: page_size
+          in: query
+          description: Number of results to return per page.
+          required: false
+          type: integer
+      responses:
+        '200':
+          description: 'User expense and income statistics for the selected period in the calendar were returned successfully.'
+          schema:
+            required:
+              - count
+              - results
+            type: object
+            properties:
+              count:
+                type: integer
+              next:
+                type: string
+                format: uri
+                x-nullable: true
+              previous:
+                type: string
+                format: uri
+                x-nullable: true
+              results:
+                type: array
+                items:
+                  $ref: '#/definitions/GlobalsDetail'
+        '401':
+          description: "The user is not authorized."
+      tags:
+        - transactions
+    parameters: []
+  /transactions/{id}/:
+    put:
+      summary: 'Upgrade user transaction data by id.'
+      operationId: transactions_update
+      description: 'Upgrade transaction data by id.'
+      parameters:
+        - name: data
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/TransactionCreate'
+      responses:
+        '200':
+          description: 'The user transaction data has been successfully updated.'
+          schema:
+            $ref: '#/definitions/TransactionCreate'
+        '401':
+          description: "The user is not authorized."
+        '404':
+          description: "A non-existent id was passed."
+        '403':
+          description: "The user is not the owner of the resource."
+      tags:
+        - transactions
+    patch:
+      summary: 'Partially upgrade user transaction data by id.'
+      operationId: transactions_partial_update
+      description: 'Partially upgrade transaction data by id.'
+      parameters:
+        - name: data
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/TransactionCreate'
+      responses:
+        '200':
+          description: 'The user transaction data has been successfully updated.'
+          schema:
+            $ref: '#/definitions/TransactionCreate'
+        '401':
+          description: "The user is not authorized."
+        '404':
+          description: "A non-existent id was passed."
+        '403':
+          description: "The user is not the owner of the resource."
+      tags:
+        - transactions
+    delete:
+      summary: 'Delete user transaction by id.'
+      operationId: transactions_delete
+      description: 'Delete user transaction by id.'
+      parameters: []
+      responses:
+        '204':
+          description: 'The user transaction was successfully deleted.'
+        '401':
+          description: "The user is not authorized."
+        '404':
+          description: "A non-existent id was passed."
+        '403':
+          description: "The user is not the owner of the resource."
+      tags:
+        - transactions
+    parameters:
+      - name: id
+        in: path
+        required: true
+        type: string
+  /users/register/:
+    post:
+      summary: 'Create a new user.'
+      operationId: users_register_create
+      description: 'Create a new user.'
+      security: []   # No security
+      parameters:
+        - name: data
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/CustomUserCreate'
+      responses:
+        '201':
+          description: 'A new user has been created and registered in the system.'
+          schema:
+            $ref: '#/definitions/CustomUserCreate'
+        '400':
+          description: 'Invalid data sent.'
+      tags:
+        - users
+    parameters: []
+  /users/token/:
+    post:
+      summary: 'Get a JWT token.'
+      operationId: users_token_create
+      description: >-
+        Takes a set of user credentials and returns an access and refresh JSON
+        web
+
+        token pair to prove the authentication of those credentials.
+      security: []   # No security
+      parameters:
+        - name: data
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/TokenObtainPair'
+      responses:
+        '201':
+          description: 'JWT token data returned successfully.'
+          schema:
+            $ref: '#/definitions/TokenObtainPair'
+        '401':
+          description: "The user is not authorized."
+      tags:
+        - users
+    parameters: []
+  /users/token/refresh/:
+    post:
+      summary: 'Refresh a JWT token.'
+      operationId: users_token_refresh_create
+      description: |-
+        Takes a refresh type JSON web token and returns an access type JSON web
+        token if the refresh token is valid.
+      security:
+        - api_key: []
+      parameters:
+        - name: data
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/TokenRefresh'
+      responses:
+        '201':
+          description: 'JWT token has been successfully refreshed.'
+          schema:
+            $ref: '#/definitions/TokeAccessRefresh'
+        '401':
+          description: "The user is not authorized."
+      tags:
+        - users
+    parameters: []
+  /users/{id}/:
+    get:
+      summary: 'Get the data of the registered user by id.'
+      operationId: users_read
+      description: 'Get the data of the registered user by id.'
+      parameters: []
+      responses:
+        '200':
+          description: 'Logged in user data returned successfully.'
+          schema:
+            $ref: '#/definitions/CustomUserDetail'
+        '401':
+          description: "The user is not authorized."
+        '404':
+          description: "A non-existent id was passed or the user is not the owner of the resource."
+      tags:
+        - users
+    parameters:
+      - name: id
+        in: path
+        description: A unique integer value identifying this user.
+        required: true
+        type: integer
+  /widgets/:
+    get:
+      summary: 'Return a list of user widgets.'
+      operationId: widgets_list
+      description: 'Return a list of user widgets.'
+      parameters: []
+      responses:
+        '200':
+          description: 'A list of custom widgets was returned. If the user has no widgets, an empty list is returned.'
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/WidgetList'
+      tags:
+        - widgets
+    post:
+      summary: 'Create a new widget.'
+      operationId: widgets_create
+      description: 'Create a new widget.'
+      parameters:
+        - name: data
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/WidgetCreate'
+      responses:
+        '201':
+          description: 'The widget has been successfully created.'
+          schema:
+            $ref: '#/definitions/WidgetCreate'
+        '401':
+          description: "The user is not authorized."
+        '400':
+          description: 'Invalid data sent.'
+      tags:
+        - widgets
+    parameters: []
+  /widgets/{id}/:
+    delete:
+      summary: 'Remove widget by id.'
+      operationId: widgets_delete
+      description: 'Remove widget by id.'
+      parameters: []
+      responses:
+        '204':
+          description: 'The widget has been successfully removed.'
+        '401':
+          description: "The user is not authorized."
+        '404':
+          description: "A non-existent id was passed."
+        '403':
+          description: "The user is not the owner of the resource."
+      tags:
+        - widgets
+    parameters:
+      - name: id
+        in: path
+        required: true
+        type: string
+definitions:
+  CategoryList:
+    required:
+      - name
+      - category_type
+    type: object
+    properties:
+      id:
+        title: ID
+        type: integer
+        readOnly: true
+      name:
+        title: Name
+        type: string
+        maxLength: 150
+        minLength: 1
+      category_type:
+        title: Category_type
+        type: string
+        enum:
+          - IN
+          - EX
+  CategoryCreate:
+    required:
+      - name
+      - category_type
+    type: object
+    properties:
+      id:
+        title: ID
+        type: integer
+        readOnly: true
+      name:
+        title: Name
+        type: string
+        maxLength: 150
+        minLength: 1
+      category_type:
+        title: Category_type
+        type: string
+        enum:
+          - IN
+          - EX
+  SummaryList:
+    type: object
+    properties:
+      id:
+        title: ID
+        type: integer
+        readOnly: true
+      name:
+        title: Name
+        type: string
+        format: string
+      category_type:
+        title: Category_type
+        type: string
+        enum:
+          - IN
+          - EX
+      total_by_expenses:
+        title: 'Total by expenses'
+        type: integer
+        format: integer
+  TransactionList:
+    required:
+      - category
+      - amount
+      - date
+    type: object
+    properties:
+      id:
+        title: ID
+        type: integer
+        readOnly: true
+      category:
+        $ref: '#/definitions/CategoryList'
+      amount:
+        title: Amount
+        type: string
+        format: decimal
+      date:
+        title: Date
+        type: string
+        format: date
+  TransactionCreate:
+    required:
+      - category
+      - amount
+      - date
+    type: object
+    properties:
+      id:
+        title: ID
+        type: integer
+        readOnly: true
+      category:
+        title: Category
+        type: integer
+      amount:
+        title: Amount
+        type: string
+        format: decimal
+      date:
+        title: Date
+        type: string
+        format: date
+  GlobalsDetail:
+    required:
+      - totals_income
+      - totals_expense
+    type: object
+    properties:
+      totals_income:
+        title: Totals income
+        type: string
+        format: decimal
+      totals_expense:
+        title: Totals expense
+        type: string
+        format: decimal
+  CustomUserCreate:
+    required:
+      - username
+      - email
+      - password
+    type: object
+    properties:
+      username:
+        title: Имя пользователя
+        description: >-
+          Обязательное поле. Не более 150 символов. Только буквы, цифры и
+          символы @/./+/-/_.
+        type: string
+        pattern: ^[\w.@+-]+$
+        maxLength: 150
+        minLength: 1
+      email:
+        title: Адрес электронной почты
+        type: string
+        format: email
+        maxLength: 254
+        minLength: 1
+      password:
+        title: Пароль
+        type: string
+        maxLength: 128
+        minLength: 1
+  TokenObtainPair:
+    required:
+      - email
+      - password
+    type: object
+    properties:
+      email:
+        title: Email
+        type: string
+        minLength: 1
+      password:
+        title: Password
+        type: string
+        minLength: 1
+  TokenRefresh:
+      required:
+        - refresh
+      type: object
+      properties:
+        refresh:
+          title: Refresh
+          type: string
+          example: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTYwMzg4'
+
+  TokenAccess:
+    required:
+      - access
+    type: object
+    properties:
+      access:
+        title: Access
+        type: string
+        example: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTYwMzg4'
+
+  TokeAccessRefresh:
+    allOf:
+      - $ref: '#/definitions/TokenAccess'
+      - $ref: '#/definitions/TokenRefresh'
+  CustomUserDetail:
+    required:
+      - username
+    type: object
+    properties:
+      id:
+        title: ID
+        type: integer
+        readOnly: true
+      username:
+        title: Имя пользователя
+        description: >-
+          Обязательное поле. Не более 150 символов. Только буквы, цифры и
+          символы @/./+/-/_.
+        type: string
+        pattern: ^[\w.@+-]+$
+        maxLength: 150
+        minLength: 1
+  WidgetList:
+    required:
+      - limit
+      - category
+      - criterion
+      - duration
+    type: object
+    properties:
+      id:
+        title: ID
+        type: integer
+        readOnly: true
+      limit:
+        title: Limit
+        type: string
+        format: decimal
+      updated_at:
+        title: Updated_at
+        type: string
+        format: date
+        readOnly: true
+      category:
+        title: Category
+        type: integer
+      color:
+        title: Color
+        type: string
+        pattern: ^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
+        maxLength: 18
+        minLength: 1
+      creation_at:
+        title: Creation_at
+        type: string
+        format: date
+        readOnly: true
+      criterion:
+        title: Criterion
+        type: string
+        enum:
+          - '>'
+          - <
+      duration:
+        title: Duration
+        type: number
+      end_date:
+        title: End date
+        type: string
+        readOnly: true
+      total:
+        title: Total
+        type: string
+        readOnly: true
+  WidgetCreate:
+    required:
+      - category
+      - limit
+      - duration
+      - criterion
+    type: object
+    properties:
+      id:
+        title: ID
+        type: integer
+        readOnly: true
+      category:
+        title: Category
+        type: integer
+      limit:
+        title: Limit
+        type: string
+        format: decimal
+      duration:
+        title: Duration
+        type: number
+      criterion:
+        title: Criterion
+        type: string
+        enum:
+          - '>'
+          - <
+      color:
+        title: Color
+        type: string
+        pattern: ^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
+        maxLength: 18
+        minLength: 1
+      creation_at:
+        title: Creation_at
+        type: string
+        format: date
+        readOnly: true

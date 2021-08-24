@@ -1,0 +1,38 @@
+version: '3.3'
+
+services:
+    nginx:
+      build:
+        context: ./
+        dockerfile: ./nginx/Dockerfile
+      depends_on:
+        - server
+      ports:
+        - 80:80
+      volumes:
+        - ./server/media:/nginx/media
+
+    server:
+      restart: always
+      build:
+        context: ./
+        dockerfile: ./server/Dockerfile.prod
+      command: gunicorn config.wsgi -c ./config/gunicorn.py
+      volumes:
+        - ./server/media:/server/media
+        - ./server/static:/server/static
+      depends_on:
+        - db
+      environment:
+        DEBUG: 'False'
+        DATABASE_URL: 'postgres://postgres:postgres@db:5432/postgres'
+
+    db:
+      restart: always
+      image: postgres:12.4-alpine
+      volumes:
+        - ./pg_data:/var/lib/postgresql/data
+      environment:
+        POSTGRES_DB: postgres
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
